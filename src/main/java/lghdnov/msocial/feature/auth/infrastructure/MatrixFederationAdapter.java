@@ -50,9 +50,7 @@ class MatrixFederationAdapter implements OidcVerificationPort {
             }
 
             return new MatrixUserInfo(
-                (String) response.get("sub"),
-                (String) response.get("avatar_url"),
-                (String) response.get("display_name")
+                (String) response.get("sub")
             );
         } catch (org.springframework.web.client.RestClientException e) {
             throw new ValidationException("OIDC_VERIFICATION_FAILED", "Не удалось верифицировать токен: " + e.getMessage());

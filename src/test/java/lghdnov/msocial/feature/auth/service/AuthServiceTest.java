@@ -55,8 +55,8 @@ class AuthServiceTest {
         String refreshToken = "refresh_xyz";
 
         when(oidcVerificationPort.verifyOpenIdToken(openidToken))
-            .thenReturn(new MatrixUserInfo(matrixSub, null, null));
-        when(userProvisioningPort.findByIdOrCreate(matrixSub, new MatrixUserInfo(matrixSub, null, null)))
+            .thenReturn(new MatrixUserInfo(matrixSub));
+        when(userProvisioningPort.findByIdOrCreate(matrixSub, new MatrixUserInfo(matrixSub)))
             .thenReturn(userId);
         when(userProvisioningPort.isAccountActive(userId)).thenReturn(true);
 
