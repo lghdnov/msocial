@@ -16,21 +16,21 @@ class ProfileValidatorTest {
     @Test
     void validate_shouldPass_whenBirthDateIsInPast() {
         ProfileUpdateRequest request = new ProfileUpdateRequest(
-            LocalDate.of(1990, 1, 1), null, null, null
+            LocalDate.of(1990, 1, 1), null, null
         );
         assertThatNoException().isThrownBy(() -> validator.validate(request));
     }
 
     @Test
     void validate_shouldPass_whenBirthDateIsNull() {
-        ProfileUpdateRequest request = new ProfileUpdateRequest(null, null, null, null);
+        ProfileUpdateRequest request = new ProfileUpdateRequest(null, null, null);
         assertThatNoException().isThrownBy(() -> validator.validate(request));
     }
 
     @Test
     void validate_shouldThrow_whenBirthDateIsInFuture() {
         ProfileUpdateRequest request = new ProfileUpdateRequest(
-            LocalDate.now().plusDays(1), null, null, null
+            LocalDate.now().plusDays(1), null, null
         );
         assertThatThrownBy(() -> validator.validate(request))
             .isInstanceOf(ValidationException.class)

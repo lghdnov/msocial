@@ -14,9 +14,7 @@ public record ProfileUpdateRequest(
     @Schema(description = "Адрес", example = "г. Москва, ул. Пушкина, д. 10")
     String address,
 
-    @Size(max = 255, message = "Название трека не может превышать 255 символов")
-    @Schema(description = "Любимый трек", example = "The Beatles - Yesterday")
-    String favoriteTrack,
+
 
     @Size(max = 255, message = "Статус не может превышать 255 символов")
     @Schema(description = "Статус", example = "В поиске себя")

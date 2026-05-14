@@ -1,6 +1,9 @@
 package lghdnov.msocial.feature.user.api;
 
+import lghdnov.msocial.feature.user.presentation.AvatarDTO;
 import lghdnov.msocial.feature.user.presentation.UserDTO;
+
+import java.util.List;
 
 /**
  * Порт чтения данных пользователя.
@@ -18,4 +21,12 @@ public interface UserQueryPort {
      * @throws lghdnov.msocial.common.exceptions.NotFoundException если пользователь не найден
      */
     UserDTO getProfile(Long userId);
+
+    /**
+     * Возвращает историю аватаров пользователя.
+     *
+     * @param userId идентификатор локального пользователя
+     * @return список аватаров, отсортированных по дате загрузки (новые первые)
+     */
+    List<AvatarDTO> getAvatarHistory(Long userId);
 }

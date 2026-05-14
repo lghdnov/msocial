@@ -27,8 +27,8 @@ public class PersonalInfo {
     @Column(name = "address", length = 500)
     private String address;
 
-    @Column(name = "favorite_track", length = 255)
-    private String favoriteTrack;
+    @Column(name = "favorite_track_url", length = 500)
+    private String favoriteTrackUrl;
 
     @Column(name = "status", length = 255)
     private String status;

@@ -29,6 +29,13 @@ auth:
   dev:
     skip-verify: ${DEV_AUTH_SKIP_VERIFY:false}
 
+app:
+  storage:
+    type: ${STORAGE_TYPE:local}
+    local:
+      avatar-path: ${AVATAR_STORAGE_PATH:./uploads/avatars}
+      track-path: ${TRACK_STORAGE_PATH:./uploads/tracks}
+
 matrix:
   federation:
     base-url: ${MATRIX_BASE_URL:https://matrix.org}

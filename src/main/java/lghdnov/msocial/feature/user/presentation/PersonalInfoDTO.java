@@ -12,8 +12,8 @@ public record PersonalInfoDTO(
     @Schema(description = "Адрес", example = "г. Москва, ул. Пушкина, д. 10")
     String address,
 
-    @Schema(description = "Любимый трек", example = "The Beatles - Yesterday")
-    String favoriteTrack,
+    @Schema(description = "Ссылка на любимый трек", example = "/uploads/tracks/track-uuid.mp3")
+    String favoriteTrackUrl,
 
     @Schema(description = "Статус", example = "В поиске себя")
     String status

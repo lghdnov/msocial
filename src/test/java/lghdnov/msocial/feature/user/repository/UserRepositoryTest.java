@@ -1,6 +1,7 @@
 package lghdnov.msocial.feature.user.repository;
 
 import lghdnov.msocial.TestcontainersConfiguration;
+import lghdnov.msocial.feature.user.entity.Avatar;
 import lghdnov.msocial.feature.user.entity.PersonalInfo;
 import lghdnov.msocial.feature.user.entity.User;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,6 +25,9 @@ class UserRepositoryTest {
 
     @Autowired
     private PersonalInfoRepository personalInfoRepository;
+
+    @Autowired
+    private AvatarRepository avatarRepository;
 
     @Test
     void findByExternalId_shouldReturnUser_whenExists() {
@@ -64,5 +69,32 @@ class UserRepositoryTest {
 
         assertThat(found).isPresent();
         assertThat(found.get().getStatus()).isEqualTo("Hello world");
+    }
+
+    @Test
+    void avatar_shouldLinkToUser_andSupportActiveFilter() {
+        User user = User.builder().externalId("@avatar:example.org").build();
+        User saved = userRepository.save(user);
+
+        Avatar oldAvatar = Avatar.builder()
+            .userId(saved.getId())
+            .url("/avatars/old.jpg")
+            .active(false)
+            .build();
+        avatarRepository.save(oldAvatar);
+
+        Avatar newAvatar = Avatar.builder()
+            .userId(saved.getId())
+            .url("/avatars/new.jpg")
+            .active(true)
+            .build();
+        avatarRepository.save(newAvatar);
+
+        List<Avatar> history = avatarRepository.findByUserIdOrderByUploadedAtDesc(saved.getId());
+        Optional<Avatar> active = avatarRepository.findByUserIdAndActiveTrue(saved.getId());
+
+        assertThat(history).hasSize(2);
+        assertThat(active).isPresent();
+        assertThat(active.get().getUrl()).isEqualTo("/avatars/new.jpg");
     }
 }

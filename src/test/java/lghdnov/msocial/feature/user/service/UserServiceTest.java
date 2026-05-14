@@ -2,11 +2,15 @@ package lghdnov.msocial.feature.user.service;
 
 import lghdnov.msocial.common.exceptions.NotFoundException;
 import lghdnov.msocial.common.exceptions.ValidationException;
+import lghdnov.msocial.feature.user.api.MediaStoragePort;
+import lghdnov.msocial.feature.user.entity.Avatar;
 import lghdnov.msocial.feature.user.entity.PersonalInfo;
 import lghdnov.msocial.feature.user.entity.User;
+import lghdnov.msocial.feature.user.presentation.AvatarDTO;
 import lghdnov.msocial.feature.user.presentation.ProfileUpdateRequest;
 import lghdnov.msocial.feature.user.presentation.UserDTO;
 import lghdnov.msocial.feature.user.presentation.mapper.UserMapper;
+import lghdnov.msocial.feature.user.repository.AvatarRepository;
 import lghdnov.msocial.feature.user.repository.PersonalInfoRepository;
 import lghdnov.msocial.feature.user.repository.UserRepository;
 import lghdnov.msocial.feature.user.service.validator.ProfileValidator;
@@ -15,8 +19,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,10 +40,16 @@ class UserServiceTest {
     private PersonalInfoRepository personalInfoRepository;
 
     @Mock
+    private AvatarRepository avatarRepository;
+
+    @Mock
     private UserMapper userMapper;
 
     @Mock
     private ProfileValidator profileValidator;
+
+    @Mock
+    private MediaStoragePort mediaStoragePort;
 
     @InjectMocks
     private UserService userService;
@@ -120,7 +132,6 @@ class UserServiceTest {
         ProfileUpdateRequest request = new ProfileUpdateRequest(
             LocalDate.of(1990, 5, 20),
             "г. Москва",
-            "The Beatles - Yesterday",
             "New status"
         );
         User user = User.builder().id(userId).externalId("@user:example.org").build();
@@ -146,8 +157,69 @@ class UserServiceTest {
     void updateProfile_shouldThrow_whenUserNotFound() {
         when(userRepository.existsById(99L)).thenReturn(false);
 
-        assertThatThrownBy(() -> userService.updateProfile(99L, new ProfileUpdateRequest(null, null, null, null)))
+        assertThatThrownBy(() -> userService.updateProfile(99L, new ProfileUpdateRequest(null, null, null)))
             .isInstanceOf(NotFoundException.class)
             .hasMessageContaining("Пользователь не найден");
+    }
+
+    @Test
+    void getAvatarHistory_shouldReturnList() {
+        Long userId = 1L;
+        List<Avatar> avatars = List.of(
+            Avatar.builder().id(1L).userId(userId).url("/avatars/1.jpg").build()
+        );
+        List<AvatarDTO> dtos = List.of(new AvatarDTO(1L, "/avatars/1.jpg", null, true));
+
+        when(avatarRepository.findByUserIdOrderByUploadedAtDesc(userId)).thenReturn(avatars);
+        when(userMapper.toDtoList(avatars)).thenReturn(dtos);
+
+        List<AvatarDTO> result = userService.getAvatarHistory(userId);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).url()).isEqualTo("/avatars/1.jpg");
+    }
+
+    @Test
+    void uploadAvatar_shouldSaveAndActivateNewAvatar() {
+        Long userId = 1L;
+        MockMultipartFile file = new MockMultipartFile("file", "avatar.jpg", "image/jpeg", new byte[]{1, 2, 3});
+        User user = User.builder().id(userId).externalId("@user:example.org").build();
+        PersonalInfo info = PersonalInfo.builder().userId(userId).build();
+        UserDTO dto = new UserDTO(userId, "@user:example.org", null, null);
+        Avatar oldAvatar = Avatar.builder().id(1L).userId(userId).url("/avatars/old.jpg").active(true).build();
+
+        when(userRepository.existsById(userId)).thenReturn(true);
+        when(mediaStoragePort.uploadAvatar(file)).thenReturn("/avatars/new.jpg");
+        when(avatarRepository.findByUserIdAndActiveTrue(userId)).thenReturn(Optional.of(oldAvatar));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(personalInfoRepository.findByUserId(userId)).thenReturn(Optional.of(info));
+        when(userMapper.toDto(user, info)).thenReturn(dto);
+
+        UserDTO result = userService.uploadAvatar(userId, file);
+
+        assertThat(result).isEqualTo(dto);
+        assertThat(oldAvatar.getActive()).isFalse();
+        verify(avatarRepository, times(2)).save(any(Avatar.class));
+    }
+
+    @Test
+    void uploadTrack_shouldSaveUrlToPersonalInfo() {
+        Long userId = 1L;
+        MockMultipartFile file = new MockMultipartFile("file", "track.mp3", "audio/mpeg", new byte[]{1, 2, 3});
+        User user = User.builder().id(userId).externalId("@user:example.org").build();
+        PersonalInfo info = PersonalInfo.builder().userId(userId).build();
+        UserDTO dto = new UserDTO(userId, "@user:example.org", null, null);
+
+        when(userRepository.existsById(userId)).thenReturn(true);
+        when(mediaStoragePort.uploadTrack(file)).thenReturn("/tracks/new.mp3");
+        when(personalInfoRepository.findByUserId(userId)).thenReturn(Optional.of(info));
+        when(personalInfoRepository.save(info)).thenReturn(info);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userMapper.toDto(user, info)).thenReturn(dto);
+
+        UserDTO result = userService.uploadTrack(userId, file);
+
+        assertThat(result).isEqualTo(dto);
+        assertThat(info.getFavoriteTrackUrl()).isEqualTo("/tracks/new.mp3");
     }
 }
