@@ -19,6 +19,8 @@ import lghdnov.msocial.feature.user.repository.UserRepository;
 import lghdnov.msocial.feature.user.service.validator.ProfileValidator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -86,9 +88,8 @@ class UserService implements UserQueryPort, UserCommandPort, UserProvisioningPor
     @Override
     @Transactional
     public UserDTO updateProfile(Long userId, ProfileUpdateRequest request) {
-        if (!userRepository.existsById(userId)) {
-            throw new NotFoundException("USER_NOT_FOUND", "Пользователь не найден");
-        }
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new NotFoundException("USER_NOT_FOUND", "Пользователь не найден"));
 
         profileValidator.validate(request);
 
@@ -98,7 +99,6 @@ class UserService implements UserQueryPort, UserCommandPort, UserProvisioningPor
         applyPartialChanges(info, request);
         PersonalInfo saved = personalInfoRepository.save(info);
 
-        User user = userRepository.findById(userId).orElseThrow();
         return userMapper.toDto(user, saved);
     }
 
@@ -116,6 +116,7 @@ class UserService implements UserQueryPort, UserCommandPort, UserProvisioningPor
         }
 
         String url = mediaStoragePort.uploadAvatar(file);
+        registerRollbackCleanup(url);
 
         avatarRepository.findByUserIdAndActiveTrue(userId)
             .ifPresent(old -> {
@@ -163,6 +164,19 @@ class UserService implements UserQueryPort, UserCommandPort, UserProvisioningPor
         personalInfoRepository.save(info);
 
         return savedUser.getId();
+    }
+
+    private void registerRollbackCleanup(String url) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCompletion(int status) {
+                    if (status == STATUS_ROLLED_BACK) {
+                        mediaStoragePort.delete(url);
+                    }
+                }
+            });
+        }
     }
 
     private void applyPartialChanges(PersonalInfo info, ProfileUpdateRequest request) {

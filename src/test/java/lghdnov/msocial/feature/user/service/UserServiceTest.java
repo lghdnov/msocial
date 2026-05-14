@@ -139,10 +139,9 @@ class UserServiceTest {
         PersonalInfo saved = PersonalInfo.builder().userId(userId).status("New status").build();
         UserDTO dto = new UserDTO(userId, "@user:example.org", null, null);
 
-        when(userRepository.existsById(userId)).thenReturn(true);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(personalInfoRepository.findByUserId(userId)).thenReturn(Optional.of(existing));
         when(personalInfoRepository.save(existing)).thenReturn(saved);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userMapper.toDto(user, saved)).thenReturn(dto);
 
         UserDTO result = userService.updateProfile(userId, request);
@@ -155,7 +154,7 @@ class UserServiceTest {
 
     @Test
     void updateProfile_shouldThrow_whenUserNotFound() {
-        when(userRepository.existsById(99L)).thenReturn(false);
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.updateProfile(99L, new ProfileUpdateRequest(null, null, null)))
             .isInstanceOf(NotFoundException.class)

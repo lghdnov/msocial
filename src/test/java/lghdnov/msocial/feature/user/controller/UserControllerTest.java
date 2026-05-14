@@ -2,6 +2,7 @@ package lghdnov.msocial.feature.user.controller;
 
 import lghdnov.msocial.feature.user.api.UserCommandPort;
 import lghdnov.msocial.feature.user.api.UserQueryPort;
+import lghdnov.msocial.common.exceptions.GlobalExceptionHandler;
 import lghdnov.msocial.feature.user.presentation.AvatarDTO;
 import lghdnov.msocial.feature.user.presentation.UserDTO;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +37,9 @@ class UserControllerTest {
         userQueryPort = Mockito.mock(UserQueryPort.class);
         userCommandPort = Mockito.mock(UserCommandPort.class);
         UserController controller = new UserController(userQueryPort, userCommandPort);
-        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+            .setControllerAdvice(new GlobalExceptionHandler())
+            .build();
     }
 
     private RequestPostProcessor asUser(String userId) {
@@ -120,5 +123,18 @@ class UserControllerTest {
                 .with(asUser("1")))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(1));
+    }
+
+    @Test
+    void getProfile_shouldReturn403_whenPrincipalIsNull() throws Exception {
+        mockMvc.perform(get("/api/v1/users/profile"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void getProfile_shouldReturn403_whenPrincipalNameIsInvalid() throws Exception {
+        mockMvc.perform(get("/api/v1/users/profile")
+                .with(asUser("not-a-number")))
+            .andExpect(status().isForbidden());
     }
 }

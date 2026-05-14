@@ -8,6 +8,7 @@ import lghdnov.msocial.feature.user.api.UserCommandPort;
 import lghdnov.msocial.feature.user.api.UserQueryPort;
 import lghdnov.msocial.feature.user.presentation.AvatarDTO;
 import lghdnov.msocial.feature.user.presentation.ProfileUpdateRequest;
+import lghdnov.msocial.common.exceptions.AccessDeniedException;
 import lghdnov.msocial.feature.user.presentation.UserDTO;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +36,7 @@ public class UserController {
     @ApiResponse(responseCode = "404", description = "Пользователь не найден")
     @GetMapping("/profile")
     public ResponseEntity<UserDTO> getProfile(Principal principal) {
-        Long userId = Long.valueOf(principal.getName());
+        Long userId = resolveUserId(principal);
         return ResponseEntity.ok(userQueryPort.getProfile(userId));
     }
 
@@ -48,7 +49,7 @@ public class UserController {
         Principal principal,
         @Valid @RequestBody ProfileUpdateRequest request
     ) {
-        Long userId = Long.valueOf(principal.getName());
+        Long userId = resolveUserId(principal);
         return ResponseEntity.ok(userCommandPort.updateProfile(userId, request));
     }
 
@@ -56,7 +57,7 @@ public class UserController {
     @ApiResponse(responseCode = "200", description = "История аватаров")
     @GetMapping("/profile/avatars")
     public ResponseEntity<List<AvatarDTO>> getAvatarHistory(Principal principal) {
-        Long userId = Long.valueOf(principal.getName());
+        Long userId = resolveUserId(principal);
         return ResponseEntity.ok(userQueryPort.getAvatarHistory(userId));
     }
 
@@ -68,7 +69,7 @@ public class UserController {
         Principal principal,
         @RequestParam("file") MultipartFile file
     ) {
-        Long userId = Long.valueOf(principal.getName());
+        Long userId = resolveUserId(principal);
         return ResponseEntity.ok(userCommandPort.uploadAvatar(userId, file));
     }
 
@@ -80,7 +81,18 @@ public class UserController {
         Principal principal,
         @RequestParam("file") MultipartFile file
     ) {
-        Long userId = Long.valueOf(principal.getName());
+        Long userId = resolveUserId(principal);
         return ResponseEntity.ok(userCommandPort.uploadTrack(userId, file));
+    }
+
+    private Long resolveUserId(Principal principal) {
+        if (principal == null || principal.getName() == null) {
+            throw new AccessDeniedException("UNAUTHORIZED", "Пользователь не аутентифицирован");
+        }
+        try {
+            return Long.valueOf(principal.getName());
+        } catch (NumberFormatException e) {
+            throw new AccessDeniedException("INVALID_PRINCIPAL", "Некорректный идентификатор пользователя");
+        }
     }
 }
