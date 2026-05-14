@@ -14,6 +14,7 @@ import lghdnov.msocial.feature.auth.presentation.AuthResponse;
 import lghdnov.msocial.feature.auth.presentation.LoginRequest;
 import lghdnov.msocial.feature.auth.presentation.RefreshRequest;
 import lghdnov.msocial.feature.user.api.UserProvisioningPort;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +35,9 @@ class AuthService implements AuthCommandPort {
     private final TokenGenerationPort tokenGenerationPort;
     private final SessionManagementPort sessionManagementPort;
 
+    @Value("${auth.dev.skip-verify:false}")
+    private boolean skipVerify;
+
     AuthService(
         OidcVerificationPort oidcVerificationPort,
         UserProvisioningPort userProvisioningPort,
@@ -53,7 +57,12 @@ class AuthService implements AuthCommandPort {
             throw new ValidationException("OIDC_TOKEN_EMPTY", "OpenID токен обязателен");
         }
 
-        MatrixUserInfo matrixUser = oidcVerificationPort.verifyOpenIdToken(request.openidToken());
+        MatrixUserInfo matrixUser;
+        if (skipVerify && request.userId() != null && !request.userId().isBlank()) {
+            matrixUser = new MatrixUserInfo(request.userId());
+        } else {
+            matrixUser = oidcVerificationPort.verifyOpenIdToken(request.openidToken());
+        }
         Long userId = userProvisioningPort.findByIdOrCreate(matrixUser.sub());
 
         if (!userProvisioningPort.isAccountActive(userId)) {

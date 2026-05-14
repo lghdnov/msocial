@@ -25,6 +25,10 @@ jwt:
   secret: ${JWT_SECRET:your-secret-key-here-change-in-production}
   expiration: ${JWT_EXPIRATION:86400000}
 
+auth:
+  dev:
+    skip-verify: ${DEV_AUTH_SKIP_VERIFY:false}
+
 matrix:
   federation:
     base-url: ${MATRIX_BASE_URL:https://matrix.org}

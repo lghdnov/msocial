@@ -7,5 +7,8 @@ import jakarta.validation.constraints.NotBlank;
 public record LoginRequest(
     @NotBlank(message = "OpenID токен обязателен")
     @Schema(description = "Токен, полученный от Matrix-сервера", example = "openid_token_xyz")
-    String openidToken
+    String openidToken,
+
+    @Schema(description = "Идентификатор пользователя (используется только в dev-режиме при отключённой верификации)", example = "@user:example.org")
+    String userId
 ) {}

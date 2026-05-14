@@ -63,7 +63,7 @@ class AuthServiceTest {
             .thenReturn(accessToken);
         when(tokenGenerationPort.getAccessTokenExpirationSeconds()).thenReturn(900L);
 
-        AuthResponse response = authService.login(new LoginRequest(openidToken));
+        AuthResponse response = authService.login(new LoginRequest(openidToken, null));
 
         assertThat(response.accessToken()).isEqualTo(accessToken);
         assertThat(response.refreshToken()).isEqualTo(refreshToken);
@@ -73,7 +73,7 @@ class AuthServiceTest {
 
     @Test
     void login_shouldThrow_whenOpenIdTokenIsBlank() {
-        assertThatThrownBy(() -> authService.login(new LoginRequest(" ")))
+        assertThatThrownBy(() -> authService.login(new LoginRequest(" ", null)))
             .isInstanceOf(ValidationException.class)
             .hasMessageContaining("OpenID токен обязателен");
     }
@@ -110,6 +110,48 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.refresh(new RefreshRequest("invalid")))
             .isInstanceOf(NotFoundException.class)
             .hasMessageContaining("Сессия не найдена или истекла");
+    }
+
+    @Test
+    void login_shouldSkipVerificationAndUseUserId_whenDevModeEnabled() {
+        String openidToken = "any_token";
+        String devUserId = "@devuser:example.org";
+        Long localUserId = 42L;
+        String accessToken = "dev_access_jwt";
+        String refreshToken = "dev_refresh_xyz";
+
+        authService = new AuthService(
+            oidcVerificationPort,
+            userProvisioningPort,
+            tokenGenerationPort,
+            sessionManagementPort
+        );
+        // Set skipVerify = true via reflection
+        try {
+            java.lang.reflect.Field field = AuthService.class.getDeclaredField("skipVerify");
+            field.setAccessible(true);
+            field.setBoolean(authService, true);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        when(userProvisioningPort.findByIdOrCreate(devUserId))
+            .thenReturn(localUserId);
+        when(userProvisioningPort.isAccountActive(localUserId)).thenReturn(true);
+
+        Session session = Session.builder().id(99L).userId(localUserId).build();
+        when(sessionManagementPort.createSession(localUserId)).thenReturn(session);
+        when(tokenGenerationPort.generateRefreshToken(99L)).thenReturn(refreshToken);
+        when(tokenGenerationPort.generateAccessToken(eq(localUserId), any(JwtClaims.class)))
+            .thenReturn(accessToken);
+        when(tokenGenerationPort.getAccessTokenExpirationSeconds()).thenReturn(900L);
+
+        AuthResponse response = authService.login(new LoginRequest(openidToken, devUserId));
+
+        assertThat(response.accessToken()).isEqualTo(accessToken);
+        assertThat(response.refreshToken()).isEqualTo(refreshToken);
+        verify(oidcVerificationPort, never()).verifyOpenIdToken(any());
+        verify(sessionManagementPort).updateRefreshToken(99L, refreshToken);
     }
 
     @Test
