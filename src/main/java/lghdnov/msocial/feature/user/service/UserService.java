@@ -1,6 +1,5 @@
 package lghdnov.msocial.feature.user.service;
 
-import lghdnov.msocial.feature.auth.entity.MatrixUserInfo;
 import lghdnov.msocial.feature.user.api.UserProvisioningPort;
 import org.springframework.stereotype.Service;
 
@@ -21,7 +20,7 @@ public class UserService implements UserProvisioningPort {
     private final AtomicLong idGenerator = new AtomicLong(1);
 
     @Override
-    public Long findByIdOrCreate(String externalId, MatrixUserInfo userInfo) {
+    public Long findByIdOrCreate(String externalId) {
         return matrixToLocalId.computeIfAbsent(externalId, k -> idGenerator.getAndIncrement());
     }
 

@@ -6,7 +6,6 @@ import lghdnov.msocial.feature.auth.api.*;
 import lghdnov.msocial.feature.auth.entity.JwtClaims;
 import lghdnov.msocial.feature.auth.entity.MatrixUserInfo;
 import lghdnov.msocial.feature.auth.entity.Session;
-import lghdnov.msocial.feature.auth.infrastructure.JwtProvider;
 import lghdnov.msocial.feature.auth.presentation.AuthResponse;
 import lghdnov.msocial.feature.auth.presentation.LoginRequest;
 import lghdnov.msocial.feature.auth.presentation.RefreshRequest;
@@ -40,9 +39,6 @@ class AuthServiceTest {
     @Mock
     private SessionManagementPort sessionManagementPort;
 
-    @Mock
-    private JwtProvider jwtProvider;
-
     @InjectMocks
     private AuthService authService;
 
@@ -56,7 +52,7 @@ class AuthServiceTest {
 
         when(oidcVerificationPort.verifyOpenIdToken(openidToken))
             .thenReturn(new MatrixUserInfo(matrixSub));
-        when(userProvisioningPort.findByIdOrCreate(matrixSub, new MatrixUserInfo(matrixSub)))
+        when(userProvisioningPort.findByIdOrCreate(matrixSub))
             .thenReturn(userId);
         when(userProvisioningPort.isAccountActive(userId)).thenReturn(true);
 
@@ -65,13 +61,14 @@ class AuthServiceTest {
         when(tokenGenerationPort.generateRefreshToken(10L)).thenReturn(refreshToken);
         when(tokenGenerationPort.generateAccessToken(eq(userId), any(JwtClaims.class)))
             .thenReturn(accessToken);
-        when(jwtProvider.getAccessTokenExpirationSeconds()).thenReturn(900L);
+        when(tokenGenerationPort.getAccessTokenExpirationSeconds()).thenReturn(900L);
 
         AuthResponse response = authService.login(new LoginRequest(openidToken));
 
         assertThat(response.accessToken()).isEqualTo(accessToken);
         assertThat(response.refreshToken()).isEqualTo(refreshToken);
         assertThat(response.expiresIn()).isEqualTo(900L);
+        verify(sessionManagementPort).updateRefreshToken(10L, refreshToken);
     }
 
     @Test
@@ -96,13 +93,14 @@ class AuthServiceTest {
         when(tokenGenerationPort.generateRefreshToken(11L)).thenReturn(newRefresh);
         when(tokenGenerationPort.generateAccessToken(eq(userId), any(JwtClaims.class)))
             .thenReturn(newAccess);
-        when(jwtProvider.getAccessTokenExpirationSeconds()).thenReturn(900L);
+        when(tokenGenerationPort.getAccessTokenExpirationSeconds()).thenReturn(900L);
 
         AuthResponse response = authService.refresh(new RefreshRequest(oldRefresh));
 
         assertThat(response.accessToken()).isEqualTo(newAccess);
         assertThat(response.refreshToken()).isEqualTo(newRefresh);
         verify(sessionManagementPort).revokeSession(10L);
+        verify(sessionManagementPort).updateRefreshToken(11L, newRefresh);
     }
 
     @Test
@@ -123,17 +121,5 @@ class AuthServiceTest {
         authService.logout(refreshToken);
 
         verify(sessionManagementPort).revokeSession(10L);
-    }
-
-    @Test
-    void validateToken_shouldReturnTrue_whenTokenValid() {
-        when(jwtProvider.verifySignature("valid")).thenReturn(mock(io.jsonwebtoken.Claims.class));
-        assertThat(authService.validateToken("valid")).isTrue();
-    }
-
-    @Test
-    void validateToken_shouldReturnFalse_whenTokenInvalid() {
-        when(jwtProvider.verifySignature("invalid")).thenReturn(null);
-        assertThat(authService.validateToken("invalid")).isFalse();
     }
 }

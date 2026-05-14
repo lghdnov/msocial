@@ -35,4 +35,13 @@ public interface SessionManagementPort {
      * @return активная сессия, если найдена
      */
     Optional<Session> findActiveSession(String refreshToken);
+
+    /**
+     * Обновляет refresh-токен существующей сессии.
+     *
+     * @param sessionId    идентификатор сессии
+     * @param refreshToken новый refresh-токен
+     * @throws lghdnov.msocial.common.exceptions.NotFoundException если сессия не найдена
+     */
+    void updateRefreshToken(Long sessionId, String refreshToken);
 }

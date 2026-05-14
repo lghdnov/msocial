@@ -28,4 +28,11 @@ public interface TokenGenerationPort {
      * @return refresh-токен
      */
     String generateRefreshToken(Long sessionId);
+
+    /**
+     * Возвращает время жизни access-токена в секундах.
+     *
+     * @return количество секунд
+     */
+    long getAccessTokenExpirationSeconds();
 }

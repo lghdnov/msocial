@@ -54,4 +54,13 @@ class SessionService implements SessionManagementPort {
         return sessionRepository.findByRefreshToken(refreshToken)
             .filter(Session::isActive);
     }
+
+    @Override
+    @Transactional
+    public void updateRefreshToken(Long sessionId, String refreshToken) {
+        Session session = sessionRepository.findById(sessionId)
+            .orElseThrow(() -> new NotFoundException("SESSION_NOT_FOUND", "Сессия не найдена"));
+        session.setRefreshToken(refreshToken);
+        sessionRepository.save(session);
+    }
 }
