@@ -27,7 +27,7 @@ jwt:
 
 auth:
   dev:
-    skip-verify: ${DEV_AUTH_SKIP_VERIFY:false}
+    skip-verify: ${DEV_AUTH_SKIP_VERIFY:true}
 
 app:
   storage:

@@ -33,6 +33,7 @@ class SessionService implements SessionManagementPort {
     public Session createSession(Long userId) {
         Session session = Session.builder()
             .userId(userId)
+            .refreshToken("placeholder")
             .createdAt(Instant.now())
             .refreshTokenExpiresAt(Instant.now().plus(REFRESH_TOKEN_VALIDITY_DAYS, ChronoUnit.DAYS))
             .build();

@@ -72,7 +72,7 @@ class UserService implements UserQueryPort, UserCommandPort, UserProvisioningPor
     @Override
     @Transactional(readOnly = true)
     public boolean isAccountActive(Long userId) {
-        return userId != null && userRepository.existsById(userId);
+        return userId != null && userRepository.findById(userId).isPresent();
     }
 
     @Override

@@ -92,7 +92,7 @@ class UserServiceTest {
 
     @Test
     void isAccountActive_shouldReturnTrue_whenUserExists() {
-        when(userRepository.existsById(1L)).thenReturn(true);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(User.builder().id(1L).build()));
         assertThat(userService.isAccountActive(1L)).isTrue();
     }
 

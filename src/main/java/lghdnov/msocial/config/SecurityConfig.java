@@ -10,23 +10,25 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 public class SecurityConfig {
 
-    private final AuthFilter authFilter;
+  private final AuthFilter authFilter;
 
-    public SecurityConfig(AuthFilter authFilter) {
-        this.authFilter = authFilter;
-    }
+  public SecurityConfig(AuthFilter authFilter) {
+    this.authFilter = authFilter;
+  }
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(csrf -> csrf.disable())
-            .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/echo/**").permitAll()
-                .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers("/actuator/**").permitAll()
-                .anyRequest().authenticated()
-            );
-        return http.build();
-    }
+  @Bean
+  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http
+        .csrf(csrf -> csrf.disable())
+        .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/api/echo/**").permitAll()
+            .requestMatchers("/api/v1/auth/**").permitAll()
+            .requestMatchers("/swagger-ui.html").permitAll()
+            .requestMatchers("/swagger-ui/**").permitAll()
+            .requestMatchers("/v3/api-docs/**").permitAll()
+            .requestMatchers("/actuator/**").permitAll()
+            .anyRequest().authenticated());
+    return http.build();
+  }
 }
