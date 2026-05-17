@@ -118,6 +118,25 @@ class UserServiceTest {
     }
 
     @Test
+    void getDisplayName_shouldReturnExternalId_whenUserExists() {
+        User user = User.builder().id(1L).externalId("@user:example.org").build();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        String result = userService.getDisplayName(1L);
+
+        assertThat(result).isEqualTo("@user:example.org");
+    }
+
+    @Test
+    void getDisplayName_shouldReturnNull_whenUserNotFound() {
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        String result = userService.getDisplayName(99L);
+
+        assertThat(result).isNull();
+    }
+
+    @Test
     void getProfile_shouldThrow_whenUserNotFound() {
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 

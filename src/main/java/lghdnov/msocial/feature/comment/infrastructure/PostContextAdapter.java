@@ -3,6 +3,7 @@ package lghdnov.msocial.feature.comment.infrastructure;
 import lghdnov.msocial.common.exceptions.NotFoundException;
 import lghdnov.msocial.feature.comment.api.PostContextPort;
 import lghdnov.msocial.feature.post.api.PostQueryPort;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
@@ -12,13 +13,10 @@ import org.springframework.stereotype.Component;
  * из модуля {@code feature::post}.
  */
 @Component
+@RequiredArgsConstructor
 class PostContextAdapter implements PostContextPort {
 
     private final PostQueryPort postQueryPort;
-
-    PostContextAdapter(PostQueryPort postQueryPort) {
-        this.postQueryPort = postQueryPort;
-    }
 
     @Override
     public boolean isPostVisible(Long postId) {

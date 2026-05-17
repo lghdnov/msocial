@@ -105,6 +105,14 @@ class UserService implements UserQueryPort, UserCommandPort, UserProvisioningPor
 
     @Override
     @Transactional(readOnly = true)
+    public String getDisplayName(Long userId) {
+        return userRepository.findById(userId)
+            .map(User::getExternalId)
+            .orElse(null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<AvatarDTO> getAvatarHistory(Long userId) {
         return userMapper.toDtoList(avatarRepository.findByUserIdOrderByUploadedAtDesc(userId));
     }

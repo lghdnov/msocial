@@ -23,6 +23,16 @@ public interface UserQueryPort {
     UserDTO getProfile(Long userId);
 
     /**
+     * Возвращает отображаемое имя пользователя (внешний Matrix ID).
+     *
+     * @param userId идентификатор локального пользователя
+     * @return отображаемое имя; если пользователь не найден — возвращает {@code null}
+     * @implNote Реализация извлекает поле {@code externalId} из сущности {@code User}.
+     *           При миграции в микросервис может делегировать вызов удалённому API.
+     */
+    String getDisplayName(Long userId);
+
+    /**
      * Возвращает историю аватаров пользователя.
      *
      * @param userId идентификатор локального пользователя

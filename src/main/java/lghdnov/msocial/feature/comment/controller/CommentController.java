@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lghdnov.msocial.common.exceptions.AccessDeniedException;
 import lghdnov.msocial.common.exceptions.ErrorResponse;
 import lghdnov.msocial.feature.comment.api.CommentCommandPort;
@@ -25,15 +26,11 @@ import java.security.Principal;
 
 @Tag(name = "Comments", description = "Управление комментариями")
 @RestController
+@RequiredArgsConstructor
 public class CommentController {
 
     private final CommentQueryPort commentQueryPort;
     private final CommentCommandPort commentCommandPort;
-
-    public CommentController(CommentQueryPort commentQueryPort, CommentCommandPort commentCommandPort) {
-        this.commentQueryPort = commentQueryPort;
-        this.commentCommandPort = commentCommandPort;
-    }
 
     @Operation(summary = "Получить комментарии к посту")
     @ApiResponse(responseCode = "200", description = "Список комментариев",

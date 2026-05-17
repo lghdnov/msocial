@@ -12,15 +12,6 @@ import java.util.List;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface CommentMapper {
 
-    @Mapping(target = "id", source = "id")
-    @Mapping(target = "postId", source = "postId")
-    @Mapping(target = "authorId", source = "authorId")
-    @Mapping(target = "authorName", source = "authorName")
-    @Mapping(target = "parentId", source = "parentId")
-    @Mapping(target = "content", source = "content")
-    @Mapping(target = "status", source = "status")
-    @Mapping(target = "createdAt", source = "createdAt")
-    @Mapping(target = "updatedAt", source = "updatedAt")
     CommentDTO toDto(Comment comment);
 
     List<CommentDTO> toDtoList(List<Comment> comments);
