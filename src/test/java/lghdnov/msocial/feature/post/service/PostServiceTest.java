@@ -12,7 +12,7 @@ import lghdnov.msocial.feature.post.presentation.UpdatePostRequest;
 import lghdnov.msocial.feature.post.presentation.mapper.PostMapper;
 import lghdnov.msocial.feature.post.repository.PostMediaRepository;
 import lghdnov.msocial.feature.post.repository.PostRepository;
-import lghdnov.msocial.feature.post.service.validator.PostMediaValidator;
+import lghdnov.msocial.feature.post.service.PostMediaValidator;
 import lghdnov.msocial.feature.user.api.UserQueryPort;
 import lghdnov.msocial.feature.user.presentation.UserDTO;
 import org.junit.jupiter.api.Test;
@@ -122,7 +122,7 @@ class PostServiceTest {
         PostDTO dto = new PostDTO(1L, authorId, "@user:example.org", "Hello", List.of(), true, Instant.now());
 
         when(postRepository.findAllByAuthorId(authorId, pageable)).thenReturn(new PageImpl<>(List.of(post)));
-        when(postMediaRepository.findByPostIdOrderBySortOrderAsc(1L)).thenReturn(media);
+        when(postMediaRepository.findByPostIdInOrderBySortOrderAsc(List.of(1L))).thenReturn(media);
         when(postMapper.toDto(post, media)).thenReturn(dto);
 
         var result = postService.getFeed(authorId, pageable);
@@ -254,6 +254,25 @@ class PostServiceTest {
     }
 
     @Test
+    void addPostMedia_shouldThrow_whenValidatorFails() {
+        Long userId = 1L;
+        Long postId = 1L;
+        MockMultipartFile file = new MockMultipartFile("file", "image.jpg", "image/jpeg", new byte[]{1, 2, 3});
+        Post post = Post.builder().id(postId).authorId(userId).published(true).build();
+
+        when(postRepository.findById(postId)).thenReturn(Optional.of(post));
+        when(postMediaRepository.findByPostIdOrderBySortOrderAsc(postId)).thenReturn(List.of());
+        doThrow(new lghdnov.msocial.common.exceptions.ValidationException("MEDIA_TOO_MANY", "Максимум 10 файлов на пост"))
+            .when(postMediaValidator).validate(any(), eq(0));
+
+        assertThatThrownBy(() -> postService.addPostMedia(userId, postId, List.of(file)))
+            .isInstanceOf(lghdnov.msocial.common.exceptions.ValidationException.class)
+            .hasMessageContaining("Максимум 10 файлов на пост");
+
+        verify(postMediaStoragePort, never()).uploadPostMedia(any());
+    }
+
+    @Test
     void deletePostMedia_shouldDeleteFileAndRecord() {
         Long userId = 1L;
         Long postId = 1L;
@@ -266,7 +285,43 @@ class PostServiceTest {
 
         postService.deletePostMedia(userId, postId, mediaId);
 
-        verify(postMediaStoragePort).delete("/post-media/image.jpg");
         verify(postMediaRepository).delete(media);
+        verify(postMediaStoragePort).delete("/post-media/image.jpg");
+    }
+
+    @Test
+    void deletePostMedia_shouldThrow_whenMediaNotFound() {
+        Long userId = 1L;
+        Long postId = 1L;
+        Long mediaId = 99L;
+        Post post = Post.builder().id(postId).authorId(userId).published(true).build();
+
+        when(postRepository.findById(postId)).thenReturn(Optional.of(post));
+        when(postMediaRepository.findById(mediaId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> postService.deletePostMedia(userId, postId, mediaId))
+            .isInstanceOf(NotFoundException.class)
+            .hasMessageContaining("Медиафайл не найден");
+
+        verify(postMediaStoragePort, never()).delete(any());
+    }
+
+    @Test
+    void deletePostMedia_shouldThrow_whenMediaBelongsToAnotherPost() {
+        Long userId = 1L;
+        Long postId = 1L;
+        Long mediaId = 1L;
+        Post post = Post.builder().id(postId).authorId(userId).published(true).build();
+        PostMedia media = PostMedia.builder().id(mediaId).postId(2L).url("/post-media/image.jpg").build();
+
+        when(postRepository.findById(postId)).thenReturn(Optional.of(post));
+        when(postMediaRepository.findById(mediaId)).thenReturn(Optional.of(media));
+
+        assertThatThrownBy(() -> postService.deletePostMedia(userId, postId, mediaId))
+            .isInstanceOf(lghdnov.msocial.common.exceptions.ValidationException.class)
+            .hasMessageContaining("Медиафайл не принадлежит этому посту");
+
+        verify(postMediaRepository, never()).delete(any());
+        verify(postMediaStoragePort, never()).delete(any());
     }
 }

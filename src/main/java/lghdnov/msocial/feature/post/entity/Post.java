@@ -6,9 +6,12 @@ import lombok.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "posts")
+@Table(name = "posts", indexes = {
+    @Index(name = "idx_posts_author_id", columnList = "author_id"),
+    @Index(name = "idx_posts_created_at", columnList = "created_at"),
+    @Index(name = "idx_posts_author_published_deleted", columnList = "author_id, published, deleted")
+})
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -27,11 +30,13 @@ public class Post {
     @Column(name = "content", nullable = false, length = 5000)
     private String content;
 
+    @Builder.Default
     @Column(name = "deleted", nullable = false)
-    private Boolean deleted;
+    private Boolean deleted = false;
 
+    @Builder.Default
     @Column(name = "published", nullable = false)
-    private Boolean published;
+    private Boolean published = false;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -50,5 +55,17 @@ public class Post {
         if (published == null) {
             published = false;
         }
+    }
+
+    public void updateContent(String newContent) {
+        this.content = newContent;
+    }
+
+    public void publish() {
+        this.published = true;
+    }
+
+    public void markDeleted() {
+        this.deleted = true;
     }
 }

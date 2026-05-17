@@ -27,7 +27,6 @@ import java.security.Principal;
 import java.util.List;
 
 @Tag(name = "Posts", description = "Управление постами")
-@SecurityRequirement(name = "bearerAuth")
 @RestController
 public class PostController {
 
@@ -40,6 +39,7 @@ public class PostController {
     }
 
     @Operation(summary = "Получить пост по ID")
+    @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(responseCode = "200", description = "Пост найден",
         content = @Content(schema = @Schema(implementation = PostDTO.class)))
     @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован",
@@ -73,6 +73,7 @@ public class PostController {
     }
 
     @Operation(summary = "Создать пост")
+    @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(responseCode = "201", description = "Пост создан",
         content = @Content(schema = @Schema(implementation = PostDTO.class)))
     @ApiResponse(responseCode = "400", description = "Ошибка валидации",
@@ -91,6 +92,7 @@ public class PostController {
     }
 
     @Operation(summary = "Обновить пост")
+    @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(responseCode = "200", description = "Пост обновлён",
         content = @Content(schema = @Schema(implementation = PostDTO.class)))
     @ApiResponse(responseCode = "400", description = "Ошибка валидации",
@@ -115,6 +117,7 @@ public class PostController {
     }
 
     @Operation(summary = "Удалить пост")
+    @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(responseCode = "204", description = "Пост удалён")
     @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован",
         content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
@@ -136,6 +139,7 @@ public class PostController {
     }
 
     @Operation(summary = "Опубликовать пост")
+    @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(responseCode = "200", description = "Пост опубликован",
         content = @Content(schema = @Schema(implementation = PostDTO.class)))
     @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован",
@@ -157,6 +161,7 @@ public class PostController {
     }
 
     @Operation(summary = "Добавить медиафайлы к посту")
+    @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(responseCode = "200", description = "Медиа добавлены",
         content = @Content(schema = @Schema(implementation = PostDTO.class)))
     @ApiResponse(responseCode = "400", description = "Файлы некорректны",
@@ -182,6 +187,7 @@ public class PostController {
     }
 
     @Operation(summary = "Удалить медиафайл из поста")
+    @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(responseCode = "204", description = "Медиа удалено")
     @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован",
         content = @Content(schema = @Schema(implementation = ErrorResponse.class)))

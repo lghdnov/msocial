@@ -1,4 +1,4 @@
-package lghdnov.msocial.feature.post.service.validator;
+package lghdnov.msocial.feature.post.service;
 
 import lghdnov.msocial.common.exceptions.ValidationException;
 import org.springframework.stereotype.Component;
@@ -10,7 +10,7 @@ import java.util.List;
  * Валидатор медиафайлов поста.
  */
 @Component
-public class PostMediaValidator {
+class PostMediaValidator {
 
     private static final int MAX_FILES = 10;
     private static final long MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB

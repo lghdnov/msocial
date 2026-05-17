@@ -1,4 +1,4 @@
-package lghdnov.msocial.feature.post.service.validator;
+package lghdnov.msocial.feature.post.service;
 
 import lghdnov.msocial.common.exceptions.ValidationException;
 import org.junit.jupiter.api.Test;

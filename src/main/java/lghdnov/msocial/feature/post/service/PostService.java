@@ -13,9 +13,11 @@ import lghdnov.msocial.feature.post.presentation.UpdatePostRequest;
 import lghdnov.msocial.feature.post.presentation.mapper.PostMapper;
 import lghdnov.msocial.feature.post.repository.PostMediaRepository;
 import lghdnov.msocial.feature.post.repository.PostRepository;
-import lghdnov.msocial.feature.post.service.validator.PostMediaValidator;
+import lghdnov.msocial.feature.post.service.PostMediaValidator;
 import lghdnov.msocial.feature.user.api.UserQueryPort;
 import lghdnov.msocial.feature.user.presentation.UserDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Сервис управления постами.
@@ -36,6 +40,8 @@ import java.util.List;
  */
 @Service
 class PostService implements PostQueryPort, PostCommandPort {
+
+    private static final Logger log = LoggerFactory.getLogger(PostService.class);
 
     private final PostRepository postRepository;
     private final PostMediaRepository postMediaRepository;
@@ -75,8 +81,16 @@ class PostService implements PostQueryPort, PostCommandPort {
     @Transactional(readOnly = true)
     public Page<PostDTO> getFeed(Long authorId, Pageable pageable) {
         Page<Post> posts = postRepository.findAllByAuthorId(authorId, pageable);
+        List<Long> postIds = posts.getContent().stream()
+            .map(Post::getId)
+            .toList();
+
+        Map<Long, List<PostMedia>> mediaMap = postMediaRepository.findByPostIdInOrderBySortOrderAsc(postIds)
+            .stream()
+            .collect(Collectors.groupingBy(PostMedia::getPostId));
+
         return posts.map(post -> {
-            List<PostMedia> media = postMediaRepository.findByPostIdOrderBySortOrderAsc(post.getId());
+            List<PostMedia> media = mediaMap.getOrDefault(post.getId(), List.of());
             return postMapper.toDto(post, media);
         });
     }
@@ -103,7 +117,7 @@ class PostService implements PostQueryPort, PostCommandPort {
         Post post = findPostOrThrow(postId);
         assertAuthorOrThrow(post, userId);
 
-        post.setContent(request.content());
+        post.updateContent(request.content());
         Post saved = postRepository.save(post);
         List<PostMedia> media = postMediaRepository.findByPostIdOrderBySortOrderAsc(postId);
         return postMapper.toDto(saved, media);
@@ -115,7 +129,7 @@ class PostService implements PostQueryPort, PostCommandPort {
         Post post = findPostOrThrow(postId);
         assertAuthorOrThrow(post, userId);
 
-        post.setDeleted(true);
+        post.markDeleted();
         postRepository.save(post);
     }
 
@@ -125,7 +139,7 @@ class PostService implements PostQueryPort, PostCommandPort {
         Post post = findPostOrThrow(postId);
         assertAuthorOrThrow(post, userId);
 
-        post.setPublished(true);
+        post.publish();
         Post saved = postRepository.save(post);
         List<PostMedia> media = postMediaRepository.findByPostIdOrderBySortOrderAsc(postId);
         return postMapper.toDto(saved, media);
@@ -174,8 +188,14 @@ class PostService implements PostQueryPort, PostCommandPort {
             throw new lghdnov.msocial.common.exceptions.ValidationException("MEDIA_NOT_IN_POST", "Медиафайл не принадлежит этому посту");
         }
 
-        postMediaStoragePort.delete(media.getUrl());
+        String url = media.getUrl();
         postMediaRepository.delete(media);
+
+        try {
+            postMediaStoragePort.delete(url);
+        } catch (Exception e) {
+            log.warn("Не удалось удалить медиафайл из хранилища после удаления записи из БД: url={}, error={}", url, e.getMessage());
+        }
     }
 
     private Post findPostOrThrow(Long postId) {

@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "post_media")
+@Table(name = "post_media", indexes = {
+    @Index(name = "idx_post_media_post_id", columnList = "post_id")
+})
 @Getter
 @Setter
 @NoArgsConstructor

@@ -15,6 +15,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("SELECT p FROM Post p WHERE p.id = ?1 AND p.deleted = false")
     Optional<Post> findById(Long id);
 
-    @Query("SELECT p FROM Post p WHERE p.authorId = ?1 AND p.deleted = false AND p.published = true")
+    @Query("SELECT p FROM Post p WHERE p.authorId = ?1 AND p.deleted = false AND p.published = true ORDER BY p.createdAt DESC")
     Page<Post> findAllByAuthorId(Long authorId, Pageable pageable);
 }
