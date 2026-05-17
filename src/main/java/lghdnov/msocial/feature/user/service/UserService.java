@@ -17,6 +17,7 @@ import lghdnov.msocial.feature.user.repository.AvatarRepository;
 import lghdnov.msocial.feature.user.repository.PersonalInfoRepository;
 import lghdnov.msocial.feature.user.repository.UserRepository;
 import lghdnov.msocial.feature.user.service.validator.ProfileValidator;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -48,7 +49,7 @@ class UserService implements UserQueryPort, UserCommandPort, UserProvisioningPor
         AvatarRepository avatarRepository,
         UserMapper userMapper,
         ProfileValidator profileValidator,
-        MediaStoragePort mediaStoragePort
+        @Qualifier("localMediaStorageAdapter") MediaStoragePort mediaStoragePort
     ) {
         this.userRepository = userRepository;
         this.personalInfoRepository = personalInfoRepository;

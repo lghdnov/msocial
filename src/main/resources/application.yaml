@@ -35,6 +35,7 @@ app:
     local:
       avatar-path: ${AVATAR_STORAGE_PATH:./uploads/avatars}
       track-path: ${TRACK_STORAGE_PATH:./uploads/tracks}
+      post-media-path: ${POST_MEDIA_STORAGE_PATH:./uploads/post-media}
 
 matrix:
   federation:
