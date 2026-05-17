@@ -61,6 +61,7 @@ public class AuthFilter extends OncePerRequestFilter {
         || path.startsWith("/api/echo/")
         || path.startsWith("/swagger-ui.html")
         || path.startsWith("/swagger-ui/")
+        || path.startsWith("/scalar/")
         || path.startsWith("/v3/api-docs/")
         || path.startsWith("/actuator/");
   }

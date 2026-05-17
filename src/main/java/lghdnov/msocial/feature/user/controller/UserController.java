@@ -1,14 +1,19 @@
 package lghdnov.msocial.feature.user.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lghdnov.msocial.common.exceptions.AccessDeniedException;
+import lghdnov.msocial.common.exceptions.ErrorResponse;
 import lghdnov.msocial.feature.user.api.UserCommandPort;
 import lghdnov.msocial.feature.user.api.UserQueryPort;
 import lghdnov.msocial.feature.user.presentation.AvatarDTO;
 import lghdnov.msocial.feature.user.presentation.ProfileUpdateRequest;
-import lghdnov.msocial.common.exceptions.AccessDeniedException;
 import lghdnov.msocial.feature.user.presentation.UserDTO;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +24,7 @@ import java.security.Principal;
 import java.util.List;
 
 @Tag(name = "Users", description = "Управление профилем пользователя")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/v1/users")
 public class UserController {
@@ -32,8 +38,14 @@ public class UserController {
     }
 
     @Operation(summary = "Получить профиль текущего пользователя")
-    @ApiResponse(responseCode = "200", description = "Профиль найден")
-    @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+    @ApiResponse(responseCode = "200", description = "Профиль найден",
+        content = @Content(schema = @Schema(implementation = UserDTO.class)))
+    @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Пользователь не найден",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @GetMapping("/profile")
     public ResponseEntity<UserDTO> getProfile(Principal principal) {
         Long userId = resolveUserId(principal);
@@ -41,9 +53,16 @@ public class UserController {
     }
 
     @Operation(summary = "Обновить профиль текущего пользователя")
-    @ApiResponse(responseCode = "200", description = "Профиль обновлён")
-    @ApiResponse(responseCode = "400", description = "Ошибка валидации")
-    @ApiResponse(responseCode = "404", description = "Пользователь не найден")
+    @ApiResponse(responseCode = "200", description = "Профиль обновлён",
+        content = @Content(schema = @Schema(implementation = UserDTO.class)))
+    @ApiResponse(responseCode = "400", description = "Ошибка валидации",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Пользователь не найден",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PutMapping("/profile")
     public ResponseEntity<UserDTO> updateProfile(
         Principal principal,
@@ -54,7 +73,12 @@ public class UserController {
     }
 
     @Operation(summary = "Получить историю аватаров")
-    @ApiResponse(responseCode = "200", description = "История аватаров")
+    @ApiResponse(responseCode = "200", description = "История аватаров",
+        content = @Content(schema = @Schema(implementation = AvatarDTO.class)))
+    @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @GetMapping("/profile/avatars")
     public ResponseEntity<List<AvatarDTO>> getAvatarHistory(Principal principal) {
         Long userId = resolveUserId(principal);
@@ -62,11 +86,18 @@ public class UserController {
     }
 
     @Operation(summary = "Загрузить аватар")
-    @ApiResponse(responseCode = "200", description = "Аватар загружен")
-    @ApiResponse(responseCode = "400", description = "Файл некорректен")
+    @ApiResponse(responseCode = "200", description = "Аватар загружен",
+        content = @Content(schema = @Schema(implementation = UserDTO.class)))
+    @ApiResponse(responseCode = "400", description = "Файл некорректен",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping(value = "/profile/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UserDTO> uploadAvatar(
         Principal principal,
+        @Parameter(description = "Файл аватара (изображение)", required = true)
         @RequestParam("file") MultipartFile file
     ) {
         Long userId = resolveUserId(principal);
@@ -74,11 +105,18 @@ public class UserController {
     }
 
     @Operation(summary = "Загрузить любимый трек")
-    @ApiResponse(responseCode = "200", description = "Трек загружен")
-    @ApiResponse(responseCode = "400", description = "Файл некорректен")
+    @ApiResponse(responseCode = "200", description = "Трек загружен",
+        content = @Content(schema = @Schema(implementation = UserDTO.class)))
+    @ApiResponse(responseCode = "400", description = "Файл некорректен",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping(value = "/profile/track", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UserDTO> uploadTrack(
         Principal principal,
+        @Parameter(description = "Аудиофайл трека", required = true)
         @RequestParam("file") MultipartFile file
     ) {
         Long userId = resolveUserId(principal);

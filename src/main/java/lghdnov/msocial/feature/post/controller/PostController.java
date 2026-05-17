@@ -1,10 +1,15 @@
 package lghdnov.msocial.feature.post.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lghdnov.msocial.common.exceptions.AccessDeniedException;
+import lghdnov.msocial.common.exceptions.ErrorResponse;
 import lghdnov.msocial.feature.post.api.PostCommandPort;
 import lghdnov.msocial.feature.post.api.PostQueryPort;
 import lghdnov.msocial.feature.post.presentation.CreatePostRequest;
@@ -22,6 +27,7 @@ import java.security.Principal;
 import java.util.List;
 
 @Tag(name = "Posts", description = "Управление постами")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 public class PostController {
 
@@ -34,24 +40,47 @@ public class PostController {
     }
 
     @Operation(summary = "Получить пост по ID")
-    @ApiResponse(responseCode = "200", description = "Пост найден")
-    @ApiResponse(responseCode = "404", description = "Пост не найден")
+    @ApiResponse(responseCode = "200", description = "Пост найден",
+        content = @Content(schema = @Schema(implementation = PostDTO.class)))
+    @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Пост не найден",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @GetMapping("/api/v1/posts/{postId}")
-    public ResponseEntity<PostDTO> getPost(Principal principal, @PathVariable Long postId) {
+    public ResponseEntity<PostDTO> getPost(
+        Principal principal,
+        @Parameter(description = "Идентификатор поста", required = true, example = "1")
+        @PathVariable Long postId
+    ) {
         Long userId = resolveUserId(principal);
         return ResponseEntity.ok(postQueryPort.getPost(userId, postId));
     }
 
     @Operation(summary = "Получить ленту постов пользователя")
-    @ApiResponse(responseCode = "200", description = "Лента постов")
+    @ApiResponse(responseCode = "200", description = "Лента постов",
+        content = @Content(schema = @Schema(implementation = Page.class)))
+    @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @GetMapping("/api/v1/users/{userId}/posts")
-    public ResponseEntity<Page<PostDTO>> getFeed(@PathVariable Long userId, Pageable pageable) {
+    public ResponseEntity<Page<PostDTO>> getFeed(
+        @Parameter(description = "Идентификатор пользователя", required = true, example = "1")
+        @PathVariable Long userId,
+        @Parameter(hidden = true) Pageable pageable
+    ) {
         return ResponseEntity.ok(postQueryPort.getFeed(userId, pageable));
     }
 
     @Operation(summary = "Создать пост")
-    @ApiResponse(responseCode = "201", description = "Пост создан")
-    @ApiResponse(responseCode = "400", description = "Ошибка валидации")
+    @ApiResponse(responseCode = "201", description = "Пост создан",
+        content = @Content(schema = @Schema(implementation = PostDTO.class)))
+    @ApiResponse(responseCode = "400", description = "Ошибка валидации",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping("/api/v1/posts")
     public ResponseEntity<PostDTO> createPost(
         Principal principal,
@@ -62,13 +91,22 @@ public class PostController {
     }
 
     @Operation(summary = "Обновить пост")
-    @ApiResponse(responseCode = "200", description = "Пост обновлён")
-    @ApiResponse(responseCode = "400", description = "Ошибка валидации")
-    @ApiResponse(responseCode = "403", description = "Нет доступа")
-    @ApiResponse(responseCode = "404", description = "Пост не найден")
+    @ApiResponse(responseCode = "200", description = "Пост обновлён",
+        content = @Content(schema = @Schema(implementation = PostDTO.class)))
+    @ApiResponse(responseCode = "400", description = "Ошибка валидации",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "403", description = "Нет доступа",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Пост не найден",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PutMapping("/api/v1/posts/{postId}")
     public ResponseEntity<PostDTO> updatePost(
         Principal principal,
+        @Parameter(description = "Идентификатор поста", required = true, example = "1")
         @PathVariable Long postId,
         @Valid @RequestBody UpdatePostRequest request
     ) {
@@ -78,11 +116,18 @@ public class PostController {
 
     @Operation(summary = "Удалить пост")
     @ApiResponse(responseCode = "204", description = "Пост удалён")
-    @ApiResponse(responseCode = "403", description = "Нет доступа")
-    @ApiResponse(responseCode = "404", description = "Пост не найден")
+    @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "403", description = "Нет доступа",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Пост не найден",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @DeleteMapping("/api/v1/posts/{postId}")
     public ResponseEntity<Void> deletePost(
         Principal principal,
+        @Parameter(description = "Идентификатор поста", required = true, example = "1")
         @PathVariable Long postId
     ) {
         Long userId = resolveUserId(principal);
@@ -91,12 +136,20 @@ public class PostController {
     }
 
     @Operation(summary = "Опубликовать пост")
-    @ApiResponse(responseCode = "200", description = "Пост опубликован")
-    @ApiResponse(responseCode = "403", description = "Нет доступа")
-    @ApiResponse(responseCode = "404", description = "Пост не найден")
+    @ApiResponse(responseCode = "200", description = "Пост опубликован",
+        content = @Content(schema = @Schema(implementation = PostDTO.class)))
+    @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "403", description = "Нет доступа",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Пост не найден",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping("/api/v1/posts/{postId}/publish")
     public ResponseEntity<PostDTO> publishPost(
         Principal principal,
+        @Parameter(description = "Идентификатор поста", required = true, example = "1")
         @PathVariable Long postId
     ) {
         Long userId = resolveUserId(principal);
@@ -104,14 +157,24 @@ public class PostController {
     }
 
     @Operation(summary = "Добавить медиафайлы к посту")
-    @ApiResponse(responseCode = "200", description = "Медиа добавлены")
-    @ApiResponse(responseCode = "400", description = "Файлы некорректны")
-    @ApiResponse(responseCode = "403", description = "Нет доступа")
-    @ApiResponse(responseCode = "404", description = "Пост не найден")
+    @ApiResponse(responseCode = "200", description = "Медиа добавлены",
+        content = @Content(schema = @Schema(implementation = PostDTO.class)))
+    @ApiResponse(responseCode = "400", description = "Файлы некорректны",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "403", description = "Нет доступа",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Пост не найден",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping(value = "/api/v1/posts/{postId}/media", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostDTO> addPostMedia(
         Principal principal,
+        @Parameter(description = "Идентификатор поста", required = true, example = "1")
         @PathVariable Long postId,
+        @Parameter(description = "Медиафайлы для загрузки", required = true)
         @RequestParam("files") List<MultipartFile> files
     ) {
         Long userId = resolveUserId(principal);
@@ -120,12 +183,20 @@ public class PostController {
 
     @Operation(summary = "Удалить медиафайл из поста")
     @ApiResponse(responseCode = "204", description = "Медиа удалено")
-    @ApiResponse(responseCode = "403", description = "Нет доступа")
-    @ApiResponse(responseCode = "404", description = "Пост или медиа не найдены")
+    @ApiResponse(responseCode = "401", description = "Пользователь не аутентифицирован",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "403", description = "Нет доступа",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Пост или медиа не найдены",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @DeleteMapping("/api/v1/posts/{postId}/media/{mediaId}")
     public ResponseEntity<Void> deletePostMedia(
         Principal principal,
+        @Parameter(description = "Идентификатор поста", required = true, example = "1")
         @PathVariable Long postId,
+        @Parameter(description = "Идентификатор медиа", required = true, example = "1")
         @PathVariable Long mediaId
     ) {
         Long userId = resolveUserId(principal);

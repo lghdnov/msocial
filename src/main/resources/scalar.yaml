@@ -1,0 +1,26 @@
+scalar:
+  enabled: true
+  path: /scalar
+  page-title: "API #1"
+  favicon: favicon.svg
+  theme: deepSpace
+  layout: modern
+  dark-mode: false
+  hide-dark-mode-toggle: false
+  show-sidebar: true
+  hide-models: false
+  hide-test-request-button: false
+  hide-search: false
+  hide-client-button: true
+  show-operation-id: false
+  default-open-all-tags: true
+  expand-all-model-sections: false
+  expand-all-responses: false
+  operation-title-source: summary
+  persist-auth: false
+  telemetry: true
+  document-download-type: both
+  with-default-fonts: true
+  order-required-properties-first: true
+  schema-property-order: alpha
+  show-developer-tools: localhost

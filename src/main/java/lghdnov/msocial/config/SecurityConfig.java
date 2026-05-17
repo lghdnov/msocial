@@ -27,6 +27,7 @@ public class SecurityConfig {
             .requestMatchers("/api/v1/posts/**").authenticated()
             .requestMatchers("/swagger-ui.html").permitAll()
             .requestMatchers("/swagger-ui/**").permitAll()
+            .requestMatchers("/scalar/**").permitAll()
             .requestMatchers("/v3/api-docs/**").permitAll()
             .requestMatchers("/actuator/**").permitAll()
             .anyRequest().authenticated());
