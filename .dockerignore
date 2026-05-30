@@ -1,0 +1,15 @@
+.git
+.github
+.gradle
+.env
+*.md
+Dockerfile
+.dockerignore
+bin/
+.gitignore
+.gitattributes
+HELP.md
+.settings/
+.classpath
+.project
+.factorypath
