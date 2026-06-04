@@ -72,6 +72,22 @@ public class PostController {
         return ResponseEntity.ok(postQueryPort.getFeed(userId, pageable));
     }
 
+    @Operation(summary = "Получить ленту постов пользователя по externalId")
+    @ApiResponse(responseCode = "200", description = "Лента постов",
+        content = @Content(schema = @Schema(implementation = Page.class)))
+    @ApiResponse(responseCode = "404", description = "Пользователь не найден",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @GetMapping("/api/v1/users/by-external-id/{externalId}/posts")
+    public ResponseEntity<Page<PostDTO>> getFeedByExternalId(
+        @Parameter(description = "Внешний идентификатор пользователя (Matrix ID)", required = true, example = "@user:example.org")
+        @PathVariable String externalId,
+        @Parameter(hidden = true) Pageable pageable
+    ) {
+        return ResponseEntity.ok(postQueryPort.getFeedByExternalId(externalId, pageable));
+    }
+
     @Operation(summary = "Создать пост")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(responseCode = "201", description = "Пост создан",

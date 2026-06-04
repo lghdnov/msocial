@@ -31,4 +31,14 @@ public interface PostQueryPort {
      * @return страница постов
      */
     Page<PostDTO> getFeed(Long authorId, Pageable pageable);
+
+    /**
+     * Возвращает ленту постов пользователя по внешнему идентификатору (Matrix ID).
+     *
+     * @param externalId внешний идентификатор автора, например {@code @user:matrix.org}
+     * @param pageable параметры пагинации
+     * @return страница опубликованных постов
+     * @throws lghdnov.msocial.common.exceptions.NotFoundException если пользователь не найден
+     */
+    Page<PostDTO> getFeedByExternalId(String externalId, Pageable pageable);
 }

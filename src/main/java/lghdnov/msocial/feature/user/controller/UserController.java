@@ -52,6 +52,21 @@ public class UserController {
         return ResponseEntity.ok(userQueryPort.getProfile(userId));
     }
 
+    @Operation(summary = "Получить профиль пользователя по externalId")
+    @ApiResponse(responseCode = "200", description = "Профиль найден",
+        content = @Content(schema = @Schema(implementation = UserDTO.class)))
+    @ApiResponse(responseCode = "404", description = "Пользователь не найден",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @GetMapping("/by-external-id/{externalId}")
+    public ResponseEntity<UserDTO> getProfileByExternalId(
+        @Parameter(description = "Внешний идентификатор пользователя (Matrix ID)", required = true, example = "@user:example.org")
+        @PathVariable String externalId
+    ) {
+        return ResponseEntity.ok(userQueryPort.getProfileByExternalId(externalId));
+    }
+
     @Operation(summary = "Обновить профиль текущего пользователя")
     @ApiResponse(responseCode = "200", description = "Профиль обновлён",
         content = @Content(schema = @Schema(implementation = UserDTO.class)))

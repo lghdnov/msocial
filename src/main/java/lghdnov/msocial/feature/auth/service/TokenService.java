@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -66,10 +68,8 @@ class TokenService implements TokenGenerationPort, TokenValidationPort {
 
         Long sessionId = claims.get("sessionId", Long.class);
         @SuppressWarnings("unchecked")
-        Set<String> roles = claims.get("roles", Set.class);
-        if (roles == null) {
-            roles = Collections.emptySet();
-        }
+        List<String> rolesList = claims.get("roles", List.class);
+        Set<String> roles = rolesList != null ? new HashSet<>(rolesList) : Collections.emptySet();
 
         return new JwtClaims(claims.getSubject(), roles, sessionId);
     }

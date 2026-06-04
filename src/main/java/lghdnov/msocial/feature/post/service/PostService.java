@@ -96,6 +96,13 @@ class PostService implements PostQueryPort, PostCommandPort {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<PostDTO> getFeedByExternalId(String externalId, Pageable pageable) {
+        UserDTO user = userQueryPort.getProfileByExternalId(externalId);
+        return getFeed(user.id(), pageable);
+    }
+
+    @Override
     @Transactional
     public PostDTO createPost(Long authorId, CreatePostRequest request) {
         UserDTO userDTO = userQueryPort.getProfile(authorId);

@@ -87,6 +87,14 @@ class UserService implements UserQueryPort, UserCommandPort, UserProvisioningPor
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public UserDTO getProfileByExternalId(String externalId) {
+        User user = userRepository.findByExternalId(externalId)
+            .orElseThrow(() -> new NotFoundException("USER_NOT_FOUND", "Пользователь не найден"));
+        return getProfile(user.getId());
+    }
+
+    @Override
     @Transactional
     public UserDTO updateProfile(Long userId, ProfileUpdateRequest request) {
         User user = userRepository.findById(userId)

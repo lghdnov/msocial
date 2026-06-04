@@ -23,6 +23,15 @@ public interface UserQueryPort {
     UserDTO getProfile(Long userId);
 
     /**
+     * Возвращает профиль пользователя по внешнему идентификатору (Matrix ID).
+     *
+     * @param externalId внешний идентификатор пользователя, например {@code @user:matrix.org}
+     * @return DTO профиля
+     * @throws lghdnov.msocial.common.exceptions.NotFoundException если пользователь не найден
+     */
+    UserDTO getProfileByExternalId(String externalId);
+
+    /**
      * Возвращает отображаемое имя пользователя (внешний Matrix ID).
      *
      * @param userId идентификатор локального пользователя
